@@ -108,6 +108,9 @@ class Perplexity(MLBenchMetric):
         Returns:
             float
         """
+        if not isinstance(loss, torch.Tensor):
+            loss = torch.Tensor([loss])
+
         return torch.exp(loss)
 
 
