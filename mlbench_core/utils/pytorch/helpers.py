@@ -88,6 +88,10 @@ def convert_dtype(dtype, obj):
         return obj.float()
     elif dtype == "fp64":
         return obj.double()
+    elif dtype == "int32":
+        return obj.int()
+    elif dtype == "int64":
+        return obj.long()
     else:
         raise NotImplementedError("dtype {} not supported.".format(dtype))
 

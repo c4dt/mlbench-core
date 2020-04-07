@@ -121,6 +121,7 @@ def train_round(
         # Compute the output
         if hidden:
             output, hidden = model(data, hidden)
+            target = target.view(-1)
         else:
             output = model(data)
 
