@@ -7,7 +7,7 @@ pytorch
 ~~~~~~~
 
 Since `Kuang Liu<https://github.com/kuangliu/pytorch-cifar>` has already included many classical
-neural network models. We use their implementation direclty for 
+neural network models. We use their implementation direclty for
 
 - VGG
 
@@ -60,6 +60,18 @@ ResNet18_CIFAR10
    :cited:
 
 
+NLP
++++
+.. automodule:: mlbench_core.models.pytorch.nlp
+.. currentmodule:: mlbench_core.models.pytorch.nlp
+
+LSTM Language Model
+'''''''''''''''''''
+
+.. autoclass:: RNNLM
+    :members:
+
+
 tensorflow
 ~~~~~~~~~~
 
@@ -74,7 +86,7 @@ resnet
 
 
 .. autofunction:: fixed_padding
-.. autofunction:: conv2d_fixed_padding 
+.. autofunction:: conv2d_fixed_padding
 .. autofunction:: block_layer
 .. autofunction:: batch_norm
 
