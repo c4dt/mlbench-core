@@ -493,7 +493,7 @@ class TrainValidation(object):
                 self.transform_target_type,
                 self.use_cuda,
                 self.max_batch_per_epoch,
-                self.tracker,
+                tracker=self.tracker,
             )
 
             is_best = False
@@ -509,7 +509,7 @@ class TrainValidation(object):
                     self.transform_target_type,
                     self.use_cuda,
                     self.max_batch_per_epoch,
-                    self.tracker,
+                    tracker=self.tracker,
                 )
 
             if self.checkpoint:
