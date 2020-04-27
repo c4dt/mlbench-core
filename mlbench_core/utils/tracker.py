@@ -1,3 +1,4 @@
+import math
 import time
 from collections import defaultdict
 
@@ -34,7 +35,12 @@ class Tracker(object):
         metrics (list): List of metrics objects
         run_id (int): The id of the current run
         rank (int): The rank of this worker node
-        goal(func): A task goal to check for when logging metrics"""
+        goal(func): A task goal to check for when logging metrics
+        communication_steps (list): Names of steps that count toward
+            communcation
+        compute_steps (list): Names of steps that count toward compute
+        minimize (bool): Whether the main metric is being minimized or
+            maximized"""
 
     def __init__(
         self,
@@ -44,6 +50,7 @@ class Tracker(object):
         goal=None,
         communication_steps=["opt_step"],
         compute_steps=["fwd_pass", "comp_loss", "backprop"],
+        minimize=False,
     ):
         self.batch_times = []
         self.validation_times = []
@@ -57,7 +64,11 @@ class Tracker(object):
         self.cumulative_val_time = []
         self.best_epoch = 0
         self.current_epoch = 0
-        self.best_metric_value = 0
+        self.minimize = minimize
+        if self.minimize:
+            self.best_metric_value = math.inf
+        else:
+            self.best_metric_value = 0
         self.is_training = True
 
         self.communication_steps = []
@@ -287,7 +298,9 @@ class Tracker(object):
             new_metric_value (number): The new value of the metric
         """
 
-        if new_metric_value > self.best_metric_value:
+        if (not self.minimize and new_metric_value > self.best_metric_value) or (
+            self.minimize and new_metric_value < self.best_metric_value
+        ):
             self.best_metric_value = new_metric_value
             self.best_epoch = self.current_epoch
 

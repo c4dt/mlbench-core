@@ -213,6 +213,7 @@ def _validate(
             # Inference
             if hidden:
                 output, hidden = model(data, hidden)
+                target = target.view(-1)
             else:
                 output = model(data)
 
