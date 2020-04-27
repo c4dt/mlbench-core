@@ -284,8 +284,6 @@ def validation_round(
         transform_target_type,
         use_cuda,
         max_batch_per_epoch,
-        init_hidden=init_hidden,
-        package_hidden=package_hidden,
     )
     if tracker:
         tracker.validation_end()
@@ -494,7 +492,7 @@ class TrainValidation(object):
                 self.transform_target_type,
                 self.use_cuda,
                 self.max_batch_per_epoch,
-                tracker=self.tracker,
+                self.tracker,
             )
 
             is_best = False
@@ -510,7 +508,7 @@ class TrainValidation(object):
                     self.transform_target_type,
                     self.use_cuda,
                     self.max_batch_per_epoch,
-                    tracker=self.tracker,
+                    self.tracker,
                 )
 
             if self.checkpoint:
