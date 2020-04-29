@@ -1,26 +1,12 @@
-# Copied from fairseq
-
-
-# def Embedding(num_embeddings, embedding_dim, padding_idx):
-#     m = nn.Embedding(num_embeddings, embedding_dim, padding_idx=padding_idx)
-#     nn.init.normal_(m.weight, mean=0, std=embedding_dim ** -0.5)
-#     nn.init.constant_(m.weight[padding_idx], 0)
-#     return m
-
-
-# Copied from fairseq
-
-
-# Copied from Fairseq
 import math
 
 import torch
-from mlbench_core.models.pytorch.transformer import utils
 from torch import nn
 from torch.nn import functional as F
 
+from mlbench_core.models.pytorch.transformer import utils
 
-# Copied from fairseq
+
 class LearnedPositionalEmbedding(nn.Embedding):
     """
     This module learns positional embeddings up to a fixed maximum size.
@@ -38,14 +24,11 @@ class LearnedPositionalEmbedding(nn.Embedding):
             self.max_positions = self.num_embeddings
 
     def forward(
-            self,
-            input,
-            incremental_state=None,
-            positions=None,
+        self, input, incremental_state=None, positions=None,
     ):
         """Input is expected to be of size [bsz x seqlen]."""
         assert (positions is None) or (
-                self.padding_idx is None
+            self.padding_idx is None
         ), "If positions is pre-computed then padding_idx should not be set."
 
         if positions is None:
@@ -56,8 +39,7 @@ class LearnedPositionalEmbedding(nn.Embedding):
                     (1, 1), device=input.device, dtype=input.dtype
                 ).fill_(int(self.padding_idx + input.size(1)))
             else:
-                positions = utils.make_positions(
-                    input, self.padding_idx)
+                positions = utils.make_positions(input, self.padding_idx)
         return F.embedding(
             positions,
             self.weight,
@@ -69,12 +51,8 @@ class LearnedPositionalEmbedding(nn.Embedding):
         )
 
 
-# Copied from fairseq
 def PositionalEmbedding(
-        num_embeddings: int,
-        embedding_dim: int,
-        padding_idx: int,
-        learned: bool = False,
+    num_embeddings: int, embedding_dim: int, padding_idx: int, learned: bool = False,
 ):
     if learned:
         # if padding_idx is specified then offset the embedding ids by
@@ -94,7 +72,6 @@ def PositionalEmbedding(
     return m
 
 
-# Copied from fairseq
 class SinusoidalPositionalEmbedding(nn.Module):
     """This module produces sinusoidal positional embeddings of any length.
 
@@ -116,9 +93,7 @@ class SinusoidalPositionalEmbedding(nn.Module):
         self.onnx_trace = True
 
     @staticmethod
-    def get_embedding(
-            num_embeddings: int, embedding_dim: int, padding_idx=None
-    ):
+    def get_embedding(num_embeddings: int, embedding_dim: int, padding_idx=None):
         """Build sinusoidal embeddings.
 
         This matches the implementation in tensor2tensor, but differs slightly
@@ -141,11 +116,7 @@ class SinusoidalPositionalEmbedding(nn.Module):
         return emb
 
     def forward(
-            self,
-            input,
-            incremental_state=None,
-            timestep=None,
-            positions=None,
+        self, input, incremental_state=None, timestep=None, positions=None,
     ):
         """Input is expected to be of size [bsz x seqlen]."""
         bspair = torch.onnx.operators.shape_as_tensor(input)
@@ -164,13 +135,12 @@ class SinusoidalPositionalEmbedding(nn.Module):
             if self.onnx_trace:
                 return (
                     self.weights.index_select(index=self.padding_idx + pos, dim=0)
-                        .unsqueeze(1)
-                        .repeat(bsz, 1, 1)
+                    .unsqueeze(1)
+                    .repeat(bsz, 1, 1)
                 )
             return self.weights[self.padding_idx + pos, :].expand(bsz, 1, -1)
 
-        positions = utils.make_positions(
-            input, self.padding_idx)
+        positions = utils.make_positions(input, self.padding_idx)
         if self.onnx_trace:
             flat_embeddings = self.weights.detach().index_select(0, positions.view(-1))
             embedding_shape = torch.cat(
@@ -182,6 +152,6 @@ class SinusoidalPositionalEmbedding(nn.Module):
             return embeddings
         return (
             self.weights.index_select(0, positions.view(-1))
-                .view(bsz, seq_len, -1)
-                .detach()
+            .view(bsz, seq_len, -1)
+            .detach()
         )

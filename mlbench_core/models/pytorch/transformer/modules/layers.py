@@ -2,15 +2,14 @@ from typing import Optional
 
 import torch
 import torch.nn.functional as F
+from torch import Tensor, nn
+
 from mlbench_core.models.pytorch.transformer import utils
-from torch import Tensor
-from torch import nn
 
 from .multihead_attention import MultiheadAttention
 from .quant_noise import quant_noise
 
 
-# Copied from fairseq
 class TransformerEncoderLayer(nn.Module):
     """Encoder layer block.
 
@@ -43,19 +42,29 @@ class TransformerEncoderLayer(nn.Module):
             self.activation_dropout = getattr(args, "relu_dropout", 0)
         self.normalize_before = args.encoder_normalize_before
         self.fc1 = self.build_fc1(
-            self.embed_dim, args.encoder_ffn_embed_dim, self.quant_noise, self.quant_noise_block_size
+            self.embed_dim,
+            args.encoder_ffn_embed_dim,
+            self.quant_noise,
+            self.quant_noise_block_size,
         )
         self.fc2 = self.build_fc2(
-            args.encoder_ffn_embed_dim, self.embed_dim, self.quant_noise, self.quant_noise_block_size
+            args.encoder_ffn_embed_dim,
+            self.embed_dim,
+            self.quant_noise,
+            self.quant_noise_block_size,
         )
 
         self.final_layer_norm = utils.LayerNorm(self.embed_dim)
 
     def build_fc1(self, input_dim, output_dim, q_noise, qn_block_size):
-        return quant_noise(nn.Linear(input_dim, output_dim), p=q_noise, block_size=qn_block_size)
+        return quant_noise(
+            nn.Linear(input_dim, output_dim), p=q_noise, block_size=qn_block_size
+        )
 
     def build_fc2(self, input_dim, output_dim, q_noise, qn_block_size):
-        return quant_noise(nn.Linear(input_dim, output_dim), p=q_noise, block_size=qn_block_size)
+        return quant_noise(
+            nn.Linear(input_dim, output_dim), p=q_noise, block_size=qn_block_size
+        )
 
     def build_self_attention(self, embed_dim, args):
         return MultiheadAttention(
@@ -136,7 +145,6 @@ class TransformerEncoderLayer(nn.Module):
         return x
 
 
-# Copied from fairseq
 class TransformerDecoderLayer(nn.Module):
     """Decoder layer block.
 
@@ -155,7 +163,7 @@ class TransformerDecoderLayer(nn.Module):
     """
 
     def __init__(
-            self, args, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False
+        self, args, no_encoder_attn=False, add_bias_kv=False, add_zero_attn=False
     ):
         super().__init__()
         self.embed_dim = args.decoder_embed_dim
@@ -166,10 +174,7 @@ class TransformerDecoderLayer(nn.Module):
         self.cross_self_attention = getattr(args, "cross_self_attention", False)
 
         self.self_attn = self.build_self_attention(
-            self.embed_dim,
-            args,
-            add_bias_kv=add_bias_kv,
-            add_zero_attn=add_zero_attn,
+            self.embed_dim, args, add_bias_kv=add_bias_kv, add_zero_attn=add_zero_attn,
         )
         self.activation_fn = utils.get_activation_fn(
             activation=getattr(args, "activation_fn", "relu")
@@ -191,13 +196,21 @@ class TransformerDecoderLayer(nn.Module):
             self.encoder_attn_layer_norm = None
         else:
             self.encoder_attn = self.build_encoder_attention(self.embed_dim, args)
-            self.encoder_attn_layer_norm = utils.LayerNorm(self.embed_dim, export=export)
+            self.encoder_attn_layer_norm = utils.LayerNorm(
+                self.embed_dim, export=export
+            )
 
         self.fc1 = self.build_fc1(
-            self.embed_dim, args.decoder_ffn_embed_dim, self.quant_noise, self.quant_noise_block_size
+            self.embed_dim,
+            args.decoder_ffn_embed_dim,
+            self.quant_noise,
+            self.quant_noise_block_size,
         )
         self.fc2 = self.build_fc2(
-            args.decoder_ffn_embed_dim, self.embed_dim, self.quant_noise, self.quant_noise_block_size
+            args.decoder_ffn_embed_dim,
+            self.embed_dim,
+            self.quant_noise,
+            self.quant_noise_block_size,
         )
 
         self.final_layer_norm = utils.LayerNorm(self.embed_dim, export=export)
@@ -211,7 +224,9 @@ class TransformerDecoderLayer(nn.Module):
     def build_fc2(self, input_dim, output_dim, q_noise, qn_block_size):
         return quant_noise(nn.Linear(input_dim, output_dim), q_noise, qn_block_size)
 
-    def build_self_attention(self, embed_dim, args, add_bias_kv=False, add_zero_attn=False):
+    def build_self_attention(
+        self, embed_dim, args, add_bias_kv=False, add_zero_attn=False
+    ):
         return MultiheadAttention(
             embed_dim,
             args.decoder_attention_heads,
@@ -239,17 +254,17 @@ class TransformerDecoderLayer(nn.Module):
         self.onnx_trace = True
 
     def forward(
-            self,
-            x,
-            encoder_out=None,
-            encoder_padding_mask=None,
-            incremental_state=None,
-            prev_self_attn_state=None,
-            prev_attn_state=None,
-            self_attn_mask=None,
-            self_attn_padding_mask=None,
-            need_attn=False,
-            need_head_weights=False,
+        self,
+        x,
+        encoder_out=None,
+        encoder_padding_mask=None,
+        incremental_state=None,
+        prev_self_attn_state=None,
+        prev_attn_state=None,
+        self_attn_mask=None,
+        self_attn_padding_mask=None,
+        need_attn=False,
+        need_head_weights=False,
     ):
         """
         Args:
@@ -282,9 +297,9 @@ class TransformerDecoderLayer(nn.Module):
             self.self_attn._set_input_buffer(incremental_state, saved_state)
         _self_attn_input_buffer = self.self_attn._get_input_buffer(incremental_state)
         if self.cross_self_attention and not (
-                incremental_state is not None
-                and _self_attn_input_buffer is not None
-                and "prev_key" in _self_attn_input_buffer
+            incremental_state is not None
+            and _self_attn_input_buffer is not None
+            and "prev_key" in _self_attn_input_buffer
         ):
             if self_attn_mask is not None:
                 assert encoder_out is not None
