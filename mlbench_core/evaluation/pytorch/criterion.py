@@ -1,7 +1,8 @@
 """Customized Loss Functions."""
 
+import torch
 import torch.nn.functional as F
-from torch.nn.modules.loss import _WeightedLoss
+from torch.nn.modules.loss import _Loss, _WeightedLoss
 
 
 class BCELossRegularized(_WeightedLoss):
@@ -110,3 +111,63 @@ class MSELossRegularized(_WeightedLoss):
         l1_loss = sum(param.norm(1) for param in self.model.parameters())
         output += self.l1 * l1_loss
         return output
+
+
+class LabelSmoothedCrossEntropy(_Loss):
+    def __init__(
+        self, model, eps, padding_idx, sentence_avg=False, fast_xentropy=False
+    ):
+        super(LabelSmoothedCrossEntropy, self).__init__()
+        self.eps = eps
+        self.padding_idx = padding_idx
+        self.sentence_avg = sentence_avg
+
+        if fast_xentropy:
+            from apex.contrib.xentropy import SoftmaxCrossEntropyLoss
+
+            self.xentropy_func = SoftmaxCrossEntropyLoss
+        else:
+            self.xentropy_func = None
+
+        self.model = model
+
+    def forward(self, sample, output, target, reduce=True):
+
+        target = target.view(-1, 1)
+        if self.xentropy_func is not None:
+            assert (output[0].dtype == torch.float16) or (
+                output[0].dtype == torch.float32
+            ), "Unsupported data types"
+            output = output[0].view(
+                output[0].size(0) * output[0].size(1), output[0].size(2)
+            )
+            labels = target.view(target.size(0) * target.size(1))
+            losses = self.xentropy_func(
+                output,
+                labels,
+                self.eps,
+                self.padding_idx,
+                output[0].dtype == torch.float16,
+            )
+            loss = losses.sum()
+        else:
+            lprobs = self.model.get_normalized_probs(output, log_probs=True)
+            lprobs = lprobs.view(-1, lprobs.size(-1))
+            non_pad_mask = target.ne(self.padding_idx)
+            nll_loss = -lprobs.gather(dim=-1, index=target)[non_pad_mask]
+            smooth_loss = -lprobs.sum(dim=-1, keepdim=True)[non_pad_mask]
+            if reduce:
+                nll_loss = nll_loss.sum()
+                smooth_loss = smooth_loss.sum()
+            eps_i = self.eps / lprobs.size(-1)
+            loss = (1.0 - self.eps) * nll_loss + eps_i * smooth_loss
+
+        sample_size = (
+            sample["target"].size(0) if self.sentence_avg else sample["ntokens"]
+        )
+        logging_output = {
+            "loss": loss.data.item() if reduce else loss.data,
+            "ntokens": sample["ntokens"],
+            "sample_size": sample_size,
+        }
+        return loss, sample_size, logging_output
