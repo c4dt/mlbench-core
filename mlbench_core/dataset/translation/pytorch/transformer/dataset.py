@@ -2,9 +2,10 @@ import os
 import struct
 
 import torch
+from torch.utils.data import Dataset
+
 from mlbench_core.dataset.translation.pytorch.transformer import Dictionary
 from mlbench_core.dataset.translation.pytorch.transformer.utils import *
-from torch.utils.data import Dataset
 
 
 def _read_index_file(path):
@@ -147,7 +148,7 @@ class WMT17Dataset(Dataset):
 
     def __getitem__(self, index):
         return {
-            'id': index,
-            'source': self.src_data[index],
-            'target': self.trg_data[index],
+            "id": index,
+            "source": self.src_data[index],
+            "target": self.trg_data[index],
         }

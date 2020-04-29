@@ -14,9 +14,7 @@
 # ==============================================================================
 """Download and preprocess WMT17 en2de training and evaluation datasets."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
 import argparse
 import glob
@@ -31,7 +29,7 @@ from collections import Counter
 
 import torch
 
-from . import sub_tokenizer, indexed_dataset
+from . import indexed_dataset, sub_tokenizer
 
 # Data sources for training/evaluating the transformer translation model.
 # If any of the training sources are changed, then either:
