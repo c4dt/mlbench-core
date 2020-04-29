@@ -182,3 +182,10 @@ def get_incremental_state(module, incremental_state, key):
     if incremental_state is None or full_key not in incremental_state:
         return None
     return incremental_state[full_key]
+
+
+def log_softmax(x, dim: int, onnx_trace: bool = False):
+    if onnx_trace:
+        return F.log_softmax(x.float(), dim=dim)
+    else:
+        return F.log_softmax(x, dim=dim, dtype=torch.float32)

@@ -32,6 +32,7 @@ class TransformerDecoder(nn.Module):
         self.args = args
         super().__init__()
         self.dictionary = dictionary
+        self.onnx_trace = False
         self.register_buffer("version", torch.Tensor([3]))
         self._future_mask = torch.empty(0)
 
@@ -375,3 +376,23 @@ class TransformerDecoder(nn.Module):
             state_dict[version_key] = torch.Tensor([1])
 
         return state_dict
+
+    def get_normalized_probs(
+        self, net_output, log_probs: bool, sample=None,
+    ):
+        """Get normalized probabilities (or log probs) from a net's output."""
+
+        if hasattr(self, "adaptive_softmax") and self.adaptive_softmax is not None:
+            if sample is not None:
+                assert "target" in sample
+                target = sample["target"]
+            else:
+                target = None
+            out = self.adaptive_softmax.get_log_prob(net_output[0], target=target)
+            return out.exp_() if not log_probs else out
+
+        logits = net_output[0]
+        if log_probs:
+            return utils.log_softmax(logits, dim=-1, onnx_trace=self.onnx_trace)
+        else:
+            return utils.softmax(logits, dim=-1, onnx_trace=self.onnx_trace)
