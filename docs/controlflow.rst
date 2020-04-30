@@ -18,6 +18,12 @@ TrainValidation
 
     .. autoapimethod:: __call__
 
+MLBenchTrainer
++++++++++++++++
+
+.. autoapiclass:: MLBenchTrainer
+    :members:
+
 tensorflow
 ~~~~~~~~~~
 

@@ -263,7 +263,7 @@ class MLBenchTrainer:
         Args:
             train_loader (`obj`:torch.utils.data.DataLoader): The train set loader
             dtype (str): The datatype to use for iterator, one of `fp32`or `fp64`
-            max_batch_per_epoch (int): Maximum number of batches tot rain for per epoch,
+            max_batch_per_epoch (int | None): Maximum number of batches tot rain for per epoch,
                 Default: `None` (all batches)
             transform_target_type (bool): Transform the target type too.
                 Default: `False`
@@ -347,7 +347,7 @@ class MLBenchTrainer:
         Args:
             val_loader (`obj`:torch.utils.data.DataLoader): The validation set
             dtype (str): The datatype to use for iterator, one of `fp32`or `fp64`
-            max_batch_per_epoch (int): Maximum number of batches tot rain for per epoch,
+            max_batch_per_epoch (int | None): Maximum number of batches tot rain for per epoch,
                 Default: `None` (all batches)
             transform_target_type (bool): Transform the target type too.
                 Default: `False`
