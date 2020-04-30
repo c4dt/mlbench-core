@@ -299,6 +299,8 @@ class MLBenchTrainer:
         if self.schedule_per == "epoch":
             self.scheduler.step()
 
+        self.tracker.epoch_end()
+
     def validate(
         self, val_loader, dtype, max_batch_per_epoch=None, transform_target_type=False
     ):
